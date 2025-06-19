@@ -9,10 +9,27 @@ const JWT_SECRET = process.env.JWT_SECRET as string
 
 
 export const signupController=asyncHandler(async(req,res,next)=>{
-    const {password, email , name , isAdmin} :User=req.body
+    const {password, email , name} :User=req.body
     try {
         const hashedpw = await hashPassword(password)
-        const newentry = await userModel.create({email,password:hashedpw as string , name,isAdmin})
+        const newentry = await userModel.create({email,password:hashedpw as string , name})
+        if(!newentry){
+            next(new ApiError(500,"Database error"))
+            return
+        }
+        res.status(200).json(new apiResponse(200,{email:newentry.email,name:newentry.name},"User created succsessfully"))
+    } catch (error) {
+        console.log(error);   
+        next(new ApiError(400,"Email already exists"))
+        return;
+    }
+})
+//protect this route with admin access only
+export const adminSignupController=asyncHandler(async(req,res,next)=>{
+    const {password, email , name} :User=req.body
+    try {
+        const hashedpw = await hashPassword(password)
+        const newentry = await userModel.create({email,password:hashedpw as string , name , role:'client'})
         if(!newentry){
             next(new ApiError(500,"Database error"))
             return
@@ -40,6 +57,6 @@ export const signinController=asyncHandler(async(req,res,next)=>{
         next(new ApiError(400,"Incorrect Password"))
         return
     }
-    const token = jwt.sign({id:found.id,email:found.email,name:found.name},JWT_SECRET)
+    const token = jwt.sign({id:found.id,email:found.email,name:found.name, role:found.role},JWT_SECRET)
     res.cookie("token",token,{httpOnly:true}).status(200).json(new apiResponse(200,{id:found.id,email:found.email,name:found.name},"User logged in"))
 })

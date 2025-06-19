@@ -1,0 +1,25 @@
+# Dockerfile.dev
+
+FROM node:22.16-alpine
+
+# Install FFmpeg
+RUN apk update && apk add --no-cache ffmpeg\
+  && npm install -g typescript
+
+# Set working directory
+WORKDIR /app
+
+# Expose app port
+EXPOSE 3000
+
+
+# to build we use docker build -f Dockerfile.dev -t video-dev . this creates a local docker image
+#in order to run locally and make changes locally the image should be mounted via volume else we have to keep rebuilding the image in order to see the change
+#  docker run -it --rm \
+#   -v $(pwd):/app \
+#   -v /app/node_modules \
+#   -w /app \
+#   -p 3000:3000 \
+#   video-dev \           
+#   /bin/sh
+# this makes the container run in interactive mode synced with local file system thorgh a volume created by -v tag

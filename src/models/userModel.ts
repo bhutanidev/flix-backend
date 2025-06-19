@@ -1,18 +1,19 @@
-import mongoose, { model, Schema } from "mongoose"
+import mongoose, { model, Schema, Document } from "mongoose";
 
-export interface User{
-    email:string,
-    password:string,
-    name:string,
-    isAdmin:boolean
+export type Role = 'user' | 'admin' | 'client';
+
+export interface User extends Document {
+    email: string;
+    password: string;
+    name: string;
+    role: Role;
 }
 
 const userSchema = new Schema<User>({
-    email:{type:String,required:true,unique:true},
-    password:{type:String,required:true},
-    name:{type:String,required:true},
-    isAdmin:{type:Boolean,default:false}
-})
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    name: { type: String, required: true },
+    role: { type: String, enum: ['user', 'admin', 'client'], default: 'user' }
+});
 
-export const userModel = model("Users",userSchema)
-
+export const userModel = model<User>("Users", userSchema);
