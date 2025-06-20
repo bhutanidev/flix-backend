@@ -1,5 +1,5 @@
 import express from "express"
-import { signinController, signupController } from "../controller/auth.controller"
+import { adminSignupController, signinController, signupController } from "../controller/auth.controller"
 import {attachUserId} from "../middleware/auth.middleware"
 
 const authRouter = express.Router()
@@ -14,5 +14,7 @@ authRouter.get('/protected' , attachUserId , (req,res)=>{
 
 authRouter.post('/signup',signupController)
 authRouter.post('/signin',signinController)
+authRouter.post('/signup-admin',adminSignupController)
+
 
 export default authRouter

@@ -1,8 +1,9 @@
 import express, { Request } from 'express'
 import multer, { FileFilterCallback } from 'multer'
-import { uploadVideoController } from '../controller/video.contoller'
+import { getAllVideos, getSignedCookies, testVideoAccess, uploadVideoController } from '../controller/video.contoller'
 import path from 'path';
 import fs from 'fs';
+import { allowAdminAndClient, allowAllRoles, attachUserId } from '../middleware/auth.middleware';
 
 const videoRouter = express.Router()
 
@@ -42,6 +43,8 @@ const upload = multer({
 
 
 
-videoRouter.post('/video',upload.single('movie'),uploadVideoController)
-
+videoRouter.post('/video',attachUserId,allowAdminAndClient,upload.single('movie'),uploadVideoController)
+videoRouter.get('/allvideos' , attachUserId , allowAllRoles , getAllVideos)
+videoRouter.get('/get-signed-cookie' , attachUserId , allowAllRoles , getSignedCookies)
+videoRouter.post('/test-video-url' , attachUserId , allowAllRoles , testVideoAccess)
 export default videoRouter

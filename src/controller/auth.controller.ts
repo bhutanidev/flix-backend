@@ -29,7 +29,7 @@ export const adminSignupController=asyncHandler(async(req,res,next)=>{
     const {password, email , name} :User=req.body
     try {
         const hashedpw = await hashPassword(password)
-        const newentry = await userModel.create({email,password:hashedpw as string , name , role:'client'})
+        const newentry = await userModel.create({email,password:hashedpw as string , name , role:'admin'})
         if(!newentry){
             next(new ApiError(500,"Database error"))
             return

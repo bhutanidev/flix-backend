@@ -14,6 +14,7 @@
   "description": "",
   "dependencies": {
     "@aws-sdk/client-s3": "^3.828.0",
+    "@aws-sdk/cloudfront-signer": "^3.821.0",
     "@aws-sdk/s3-request-presigner": "^3.828.0",
     "@types/bcrypt": "^5.0.2",
     "@types/cookie-parser": "^1.4.9",
@@ -22,6 +23,7 @@
     "@types/jsonwebtoken": "^9.0.9",
     "@types/multer": "^1.4.13",
     "@types/node": "^22.15.30",
+    "aws-cloudfront-sign": "^3.0.2",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "dotenv": "^16.5.0",
