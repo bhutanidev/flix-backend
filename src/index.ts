@@ -5,11 +5,18 @@ import authRouter from './routes/auth.route'
 import cookieParser from 'cookie-parser'
 import videoRouter from './routes/video.route'
 import errorHandler from './middleware/errorHandler'
-import { getCloudfrontUrl } from './utils/cloudfrontSignedUrl'
+import cors from 'cors'
 
 const app =  express()
-
 connectMongo()
+
+const corsOptions = {
+  origin: 'http://localhost:3000',
+  optionsSuccessStatus: 200 ,
+  credentials:true
+}
+
+app.use(cors(corsOptions))
 
 
 app.use(express.json())

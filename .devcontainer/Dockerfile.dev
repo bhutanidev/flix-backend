@@ -19,7 +19,7 @@ EXPOSE 3000
 #   -v $(pwd):/app \
 #   -v /app/node_modules \
 #   -w /app \
-#   -p 3000:3000 \
-#   video-dev \           
+#   -p 3001:3000 \
+#   video-dev \
 #   /bin/sh
 # this makes the container run in interactive mode synced with local file system thorgh a volume created by -v tag

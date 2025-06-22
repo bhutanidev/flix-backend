@@ -60,3 +60,14 @@ export const signinController=asyncHandler(async(req,res,next)=>{
     const token = jwt.sign({id:found.id,email:found.email,name:found.name, role:found.role},JWT_SECRET)
     res.cookie("token",token,{httpOnly:true}).status(200).json(new apiResponse(200,{id:found.id,email:found.email,name:found.name},"User logged in"))
 })
+
+export const logoutController=asyncHandler(async(req,res,next)=>{
+    const cookies = req.cookies
+    for(let cookie in cookies)
+        res.clearCookie(cookie)
+    res.json(new apiResponse(200,{},"Logged Out successfully"))
+})
+
+export const  authController =(asyncHandler(async(req,res,next)=>{
+    res.json(new apiResponse(200,{},"Already logged in"))
+}))

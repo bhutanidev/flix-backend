@@ -44,7 +44,7 @@ const upload = multer({
 
 
 videoRouter.post('/video',attachUserId,allowAdminAndClient,upload.single('movie'),uploadVideoController)
-videoRouter.get('/allvideos' , attachUserId , allowAllRoles , getAllVideos)
+videoRouter.get('/videos' , attachUserId , allowAllRoles , getAllVideos)
 videoRouter.get('/get-signed-cookie' , attachUserId , allowAllRoles , getSignedCookies)
 videoRouter.post('/test-video-url' , attachUserId , allowAllRoles , testVideoAccess)
 export default videoRouter
