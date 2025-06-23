@@ -6,15 +6,18 @@ import cookieParser from 'cookie-parser'
 import videoRouter from './routes/video.route'
 import errorHandler from './middleware/errorHandler'
 import cors from 'cors'
+import helmet from 'helmet'
 
 const app =  express()
 connectMongo()
-
+const mode = process.env.MODE
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: mode==='production'?['https://rotflix.xyz','https://www.rotflix.xyz']:['http://localhost:3000'],
   optionsSuccessStatus: 200 ,
   credentials:true
 }
+
+app.use(helmet())
 
 app.use(cors(corsOptions))
 
