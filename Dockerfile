@@ -9,7 +9,7 @@ RUN apk update && apk add --no-cache ffmpeg\
 # Set working directory
 WORKDIR /app
 
-COPY package* .
+COPY package* ./
 
 RUN npm install
 
