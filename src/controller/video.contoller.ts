@@ -121,10 +121,11 @@ export const getSignedCookies = asyncHandler(async(req,res,next)=>{
         }
         const cookies = getCookie(record?.objectKey)
         const cookieOptions = {
-        domain: basedomain,
+        domain: ".rotflix.xyz",
         path: '/',
         httpOnly: true,
         secure: true,
+        sameSite: 'none',
         maxAge: 30 * 60 * 1000 // 30 mins
         };
         res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], cookieOptions);
