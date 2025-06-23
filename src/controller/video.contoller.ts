@@ -125,7 +125,7 @@ export const getSignedCookies = asyncHandler(async(req,res,next)=>{
         path: '/',
         httpOnly: true,
         secure: true,
-        sameSite: 'none',
+        sameSite: 'none' as 'none',
         maxAge: 30 * 60 * 1000 // 30 mins
         };
         res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], cookieOptions);
