@@ -6,7 +6,7 @@ const privateKey = fs.readFileSync(process.env.CLOUDFRONT_SECRET_PATH as string 
 
 export const getCookie = (s3object:string)=>{
     const cookies = getSignedCookies(
-      `https://${basedomain}/videos/${s3object}/**/*`, // wildcard path for the whole folder
+      `https://${basedomain}/videos/${s3object}/*`, // wildcard path for the whole folder
       {
         keypairId:process.env.CLOUDFRONT_KEY_PAIRID as string,
         privateKeyString:privateKey

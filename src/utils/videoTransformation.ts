@@ -18,12 +18,10 @@ export const videoTransformation = async (filename: string, filepath: string) =>
   const variantPlaylistInfo: string[] = [];
 
   const createVariant = (res: { name: string; width: number; height: number; bitrate: string }) => {
-    const resDir = path.join(outputBaseDir, res.name);
-    if (!fs.existsSync(resDir)) {
-      fs.mkdirSync(resDir, { recursive: true });
-    }
-
     return new Promise<void>((resolve, reject) => {
+      // ✅ Output directly to main directory (flat structure)
+      const playlistFile = path.join(outputBaseDir, `${res.name}-index.m3u8`);
+      
       ffmpeg(filepath)
         .videoCodec('libx264')
         .audioCodec('aac')
@@ -38,14 +36,19 @@ export const videoTransformation = async (filename: string, filepath: string) =>
           '-map 0:a:0?',
           '-hls_time 10',
           '-hls_list_size 0',
-          `-hls_segment_filename ${path.join(resDir, `${baseName}-${res.name}-%d.ts`)}`
+          // ✅ Flat naming: segments go directly in main folder
+          `-hls_segment_filename ${path.join(outputBaseDir, `${res.name}-segment-%d.ts`)}`
         ])
-        .output(path.join(resDir, 'index.m3u8'))
+        .output(playlistFile)
         .on('start', cmd => console.log(`🔧 Starting ${res.name}: ${cmd}`))
         .on('end', () => {
           console.log(`✅ ${res.name} HLS stream created`);
-          // Add to master playlist
-          variantPlaylistInfo.push(`#EXT-X-STREAM-INF:BANDWIDTH=${parseInt(res.bitrate) * 1000},RESOLUTION=${res.width}x${res.height}\n${res.name}/index.m3u8`);
+          
+          // ✅ Update playlist info for flat structure
+          const bandwidth = parseInt(res.bitrate.replace('k', '')) * 1000;
+          variantPlaylistInfo.push(
+            `#EXT-X-STREAM-INF:BANDWIDTH=${bandwidth},RESOLUTION=${res.width}x${res.height}\n${res.name}-index.m3u8`
+          );
           resolve();
         })
         .on('error', err => {
@@ -59,10 +62,12 @@ export const videoTransformation = async (filename: string, filepath: string) =>
   // Generate all resolutions
   await Promise.all(resolutions.map(res => createVariant(res)));
 
-  // Write master playlist
-  const masterManifest = ['#EXTM3U', ...variantPlaylistInfo].join('\n');
+  // ✅ Write master playlist with flat references
+  const masterManifest = ['#EXTM3U', '#EXT-X-VERSION:3', ...variantPlaylistInfo].join('\n');
   fs.writeFileSync(path.join(outputBaseDir, 'index.m3u8'), masterManifest);
 
   console.log('🎬 Master playlist created at:', path.join(outputBaseDir, 'index.m3u8'));
-  return outputBaseDir
+  console.log('📁 Flat structure generated - compatible with CloudFront signed cookies');
+  
+  return outputBaseDir;
 };
