@@ -121,7 +121,7 @@ export const getSignedCookies = asyncHandler(async(req,res,next)=>{
         }
         const cookies = getCookie(record?.objectKey)
         const cookieOptions = {
-        // domain: basedomain,
+        domain: basedomain,
         path: '/',
         httpOnly: true,
         secure: true,
