@@ -132,7 +132,7 @@ export const getSignedCookies = asyncHandler(async(req,res,next)=>{
         res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], cookieOptions);
         res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], cookieOptions);
 
-        res.json(new apiResponse(200,{url:`https://${basedomain}/videos/${record?.objectKey}/index.m3u8` , title:record?.title},"fetch successfull"))
+        res.json(new apiResponse(200,{url:`https://${basedomain}/videos/${record?.objectKey}/360p/index.m3u8` , title:record?.title},"fetch successfull"))
     } catch (error) {
         next(new apiError(500,"database error"))
     }
