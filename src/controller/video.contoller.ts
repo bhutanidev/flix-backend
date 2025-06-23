@@ -128,6 +128,8 @@ export const getSignedCookies = asyncHandler(async(req,res,next)=>{
         sameSite: 'none' as 'none',
         maxAge: 30 * 60 * 1000 // 30 mins
         };
+        console.log(cookies);
+        
         res.cookie('CloudFront-Policy', cookies['CloudFront-Policy'], cookieOptions);
         res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], cookieOptions);
         res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], cookieOptions);
