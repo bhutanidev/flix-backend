@@ -10,6 +10,11 @@ A full-stack video streaming platform . Rotflix supports adaptive bitrate stream
 - 📂 [Rotflix Frontend Repo](https://github.com/bhutanidev/flix-frontend)
 
 ---
+## 📸 Example: Adaptive Streaming in Action
+
+![Adaptive Streaming in Action](https://github.com/user-attachments/assets/6b490d69-2d86-40a8-bca0-098f6799116f)
+
+*⬆️ The video player automatically switches to 360p segments instead of 720p when network speed drops, ensuring uninterrupted playback via HLS.*
 
 ## 🛠️ Tech Stack
 
