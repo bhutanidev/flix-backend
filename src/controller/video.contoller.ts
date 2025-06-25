@@ -1,7 +1,7 @@
 import path from "path";
 import apiError from "../utils/ApiError";
 import asyncHandler from "../utils/asyncHandler";
-import { deleteLocalFolder, uploadHLSFolder } from "../utils/uploadToS3";
+import { deleteLocalFile, deleteLocalFolder, uploadHLSFolder, uploadPublicThumbnail } from "../utils/uploadToS3";
 import { videoTransformation } from "../utils/videoTransformation";
 import fs from "fs"
 import { videoModel } from "../models/videoModel";
@@ -12,38 +12,70 @@ import { basedomain } from "../utils/variableExports";
 
 export const uploadVideoController = asyncHandler(async(req,res,next)=>{
     try {
-        console.log("hello");
-        const title = req.body.title
-        const name = req.file?.originalname
-        const filepath = req.file?.path
-        const newname = req.file?.filename
-        if(!title){
-            next(new apiError(400,"Tittle is required"))
+        const title = req.body.title;
+        const description = req.body.description;
+        
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const videoFile = files.movie?.[0];
+        const thumbnailFile = files.thumbnail?.[0];
+        console.log(thumbnailFile)
+        
+        let error = false
+        let errorMessage : string|null = null
+        if (!videoFile || !thumbnailFile) {
+            error=true
+            errorMessage="Both video and thumbnail files are required"
         }
-        // const baseName = path.parse(name).name;
-        console.log(req.file)
-        console.log(filepath)
-        if(!name || !filepath || !newname){
-            next(new apiError(500,"No file or path name found"))
-            return
+        if(!description || !title){
+            error=true
+            errorMessage="Description and title are required"
         }
-        const outdir = await videoTransformation(name,filepath)
-        console.log(outdir)
-        const id = newname.replace(".mp4","")
-        const originalpath = path.resolve("uploads",newname)
-        await uploadHLSFolder(outdir,id)
-        deleteLocalFolder(outdir)
-        deleteLocalFolder(originalpath)
-        const record  = await videoModel.create({
-            objectKey:id,
-            title
-        })
-        res.json(new apiResponse(200,{title:record.title , id:record._id},"Upload successfull"))
+        
+        try {
+            if(error){
+                throw new apiError(400,errorMessage as string)
+            }
+            const id = videoFile.filename.replace(/\.(mp4|avi|mkv)$/i, "");
+            // ✅ Upload thumbnail first (smaller, faster)
+            const thumbnailUrl = await uploadPublicThumbnail(thumbnailFile.path, id);
+            console.log('✅ Thumbnail uploaded:', thumbnailUrl);
+            
+            // Process and upload video
+            const outdir = await videoTransformation(videoFile.originalname, videoFile.path);
+            await uploadHLSFolder(outdir, id);
+            
+            // ✅ Save record with public thumbnail URL
+            const record = await videoModel.create({
+                objectKey: id,
+                title,
+                description,
+                thumbnailUrl 
+            });
+            
+            // ✅ Cleanup all local files
+            deleteLocalFolder(outdir);
+            deleteLocalFile(videoFile.path);
+            deleteLocalFile(thumbnailFile.path);
+            
+            res.json(new apiResponse(200, {
+                title: record.title,
+                id: record._id,
+                thumbnail: record.thumbnailUrl,
+                description:record.description
+            }, "Upload successful"));
+            
+        } catch (uploadError:any) {
+            // ✅ Cleanup on error
+            console.error('❌ Upload process failed:', uploadError.message);
+            if(typeof(videoFile) === undefined || videoFile?.path !== undefined)deleteLocalFile(videoFile.path);
+            if(typeof(thumbnailFile) === undefined || thumbnailFile?.path !== undefined) deleteLocalFile(thumbnailFile.path);
+            next(new apiError(400,uploadError.message))
+        }
+        
     } catch (error) {
-        next(new apiError(500,"error in uploading"))
-        console.log(error)
+        next(new apiError(500, "Error in uploading"));
     }
-})
+});
 export const getAllVideos = asyncHandler(async(req, res, next) => {
     // Extract page and limit from query parameters
     const page = parseInt(req.query.page as string) || 1;
@@ -65,10 +97,10 @@ export const getAllVideos = asyncHandler(async(req, res, next) => {
         // Fetch videos with pagination - only select id and title
         const allVideos = await videoModel
             .find()
-            .select('_id title')
+            .select('_id title thumbnailUrl')
             .skip(offset)
             .limit(limit)
-            .sort({ createdAt: -1 }); // Optional: sort by newest first
+            .sort({ createdAt: -1 }) // Optional: sort by newest first
         
         // Get total count for pagination info
         const totalVideos = await videoModel.countDocuments();
@@ -88,7 +120,8 @@ export const getAllVideos = asyncHandler(async(req, res, next) => {
         // Transform videos to return id instead of _id
         const transformedVideos = allVideos.map(video => ({
             id: video._id,
-            title: video.title
+            title: video.title,
+            thumbnailUrl:video.thumbnailUrl
         }));
         
         // Prepare response data
@@ -134,49 +167,32 @@ export const getSignedCookies = asyncHandler(async(req,res,next)=>{
         res.cookie('CloudFront-Signature', cookies['CloudFront-Signature'], cookieOptions);
         res.cookie('CloudFront-Key-Pair-Id', cookies['CloudFront-Key-Pair-Id'], cookieOptions);
 
-        res.json(new apiResponse(200,{url:`https://${basedomain}/videos/${record?.objectKey}/index.m3u8` , title:record?.title},"fetch successfull"))
+        res.json(new apiResponse(200,{url:`https://${basedomain}/videos/${record?.objectKey}/index.m3u8` , title:record?.title , description:record?.description},"fetch successfull"))
     } catch (error) {
         next(new apiError(500,"database error"))
     }
 })
 
-export const testVideoAccess = asyncHandler(async(req,res,next)=>{
-    console.log(req.body.videoUrl);
-    
-    const { videoUrl } = req.body;
-    
-    // Get cookies from the request (set by your auth endpoint)
-    const cookies = req.cookies;
-    
+export const searchVideo = asyncHandler(async(req , res , next)=>{
     try {
-        // Make request to CloudFront with cookies
-        const response = await fetch(videoUrl, {
-            headers: {
-                'Cookie': Object.entries(cookies)
-                    .map(([key, value]) => `${key}=${value}`)
-                    .join('; ')
-            }
-        });
+        const term : string = req.query.search as string
+        const searchTerms = term.split("-").filter((str)=>str)
         
-        if (response.ok) {
-            const content = await response.text();
-            res.json({
-                success: true,
-                status: response.status,
-                content: content.substring(0, 500) + '...', // First 500 chars
-                contentLength: content.length
-            });
-        } else {
-            res.json({
-                success: false,
-                status: response.status,
-                error: await response.text()
-            });
-        }
+        const allVideos = await videoModel.find({
+            $or:searchTerms.map(term=>({
+                title: { $regex: term, $options: 'i' }
+            }))
+        }).select('_id title thumbnailUrl')
+        
+        const transformedVideos = allVideos.map(video => ({
+            id: video._id,
+            title: video.title,
+            thumbnailUrl: video.thumbnailUrl
+        }));
+        
+        res.json(new apiResponse(200,{videos:transformedVideos} , "Successfully fetched"))
     } catch (error) {
-        res.json({
-            success: false,
-        });
-        console.log(error)
+        next(new apiError(400,"DB error"))
     }
-});
+
+})

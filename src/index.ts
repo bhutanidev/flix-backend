@@ -17,7 +17,7 @@ const mode = process.env.NODE_ENV || process.env.MODE
 // Enhanced CORS configuration
 const corsOptions = {
   origin: mode === 'production' 
-    ? ['https://rotflix.xyz', 'https://www.rotflix.xyz']
+    ? ['https://rotflix.xyz', 'https://www.rotflix.xyz','https://admin.rotflix.xyz','https://www.admin.rotflix.xyz']
     : ['http://localhost:3000', 'http://localhost:3001'],
   optionsSuccessStatus: 200,
   credentials: true,
