@@ -5,11 +5,18 @@ import { userModel , User } from "../models/userModel";
 import jwt from "jsonwebtoken"
 import { comparePassword , hashPassword } from "../utils/encrypt"; 
 import { NextFunction } from "express";
+import { CreateUserSchema, SigninUserSchema } from "../types/zodSchema";
 const JWT_SECRET = process.env.JWT_SECRET as string
 
 
 export const signupController=asyncHandler(async(req,res,next)=>{
-    const {password, email , name} :User=req.body
+    const psdata = CreateUserSchema.safeParse(req.body)
+    
+    if(!psdata.success){
+        next(new ApiError(400,psdata.error.issues[0].message))
+        return
+    }
+    const {password, email , name}=psdata.data
     try {
         const hashedpw = await hashPassword(password)
         const newentry = await userModel.create({email,password:hashedpw as string , name})
@@ -26,7 +33,12 @@ export const signupController=asyncHandler(async(req,res,next)=>{
 })
 //protect this route with admin access only
 export const adminSignupController=asyncHandler(async(req,res,next)=>{
-    const {password, email , name} :User=req.body
+    const psdata = CreateUserSchema.safeParse(req.body)
+    if(!psdata.success){
+        next(new ApiError(400,psdata.error.issues[0].message))
+        return
+    }
+    const {password, email , name}=psdata.data
     try {
         const hashedpw = await hashPassword(password)
         const newentry = await userModel.create({email,password:hashedpw as string , name , role:'admin'})
@@ -43,8 +55,12 @@ export const adminSignupController=asyncHandler(async(req,res,next)=>{
 })
 
 export const signinController=asyncHandler(async(req,res,next)=>{
-    const {password, email }=req.body
-    //add cookie
+    const psdata = SigninUserSchema.safeParse(req.body)
+    if(!psdata.success){
+        next(new ApiError(400,psdata.error.issues[0].message))
+        return
+    }
+    const {password, email }=psdata.data
     const found = await userModel.findOne({
         email
     })
